@@ -85,7 +85,7 @@
   .nav-tab.active { color: #fff; border-bottom-color: var(--green); }
 
   /* ── Main ── */
-  .main { position: relative; z-index: 10; padding: 28px 36px 56px; max-width: 1600px; margin: 0 auto; }
+  .main { position: relative; z-index: 10; padding: 28px 36px 56px; max-width: 1600px; margin: 0 auto; overflow-x: hidden; }
   .view { display: none; }
   .view.active { display: block; }
 
@@ -305,7 +305,7 @@
 
   <!-- KANBAN -->
   <div id="view-kanban" class="view">
-    <div style="overflow-x:auto; width:100%;">
+    <div style="overflow-x:auto; width:100%; padding-bottom:8px;">
       <div class="kanban" id="kanban-board"></div>
     </div>
   </div>
