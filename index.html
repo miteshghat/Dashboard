@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Holcim Project Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:       #94C12E;
+    --green-light: #C2D57C;
+    --green-dark:  #6a8f1f;
+    --navy:        #1D4370;
+    --navy-light:  #2a5a96;
+    --navy-dark:   #122b4a;
+    --bg:          #f4f6f0;
+    --surface:     #ffffff;
+    --surface2:    #f8faf4;
+    --border:      #dde5d0;
+    --border-dark: #c5d4b0;
+    --text:        #1a2e10;
+    --text-mid:    #4a6030;
+    --text-muted:  #8aa070;
+    --red:         #e03030;
+    --amber:       #d4890a;
+    --radius:      10px;
+    --shadow:      0 2px 12px rgba(29,67,112,0.10);
+    --shadow-md:   0 6px 24px rgba(29,67,112,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, #94C12E22 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none; z-index: 0;
+  }
+
+  body.view-mode .edit-only { display: none !important; }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 20;
+    background: var(--navy);
+    padding: 0 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 2px 12px rgba(29,67,112,0.25);
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-mark { width: 36px; height: 36px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -1px; }
+  .logo-text h1 { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.1; }
+  .logo-text p  { font-size: 11px; color: var(--green-light); letter-spacing: 0.8px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .view-badge { display: none; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; align-items: center; gap: 5px; letter-spacing: 0.5px; }
+  body.view-mode .view-badge { display: flex; }
+
+  .sync-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.65); padding: 4px 11px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); transition: background 0.3s; }
+  .sync-dot.syncing { background: var(--amber); animation: blink 0.8s ease-in-out infinite; }
+  .sync-dot.error   { background: var(--red); }
+  .sync-dot.none    { background: rgba(255,255,255,0.3); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  /* ── Loading bar ── */
+  .loading-bar { position: fixed; top: 0; left: 0; height: 3px; background: var(--green); z-index: 999; width: 0%; transition: width 0.3s ease; }
+  .loading-bar.running { animation: lpulse 1.5s ease-in-out infinite; }
+  @keyframes lpulse { 0%{width:5%;opacity:1} 60%{width:75%;opacity:1} 100%{width:92%;opacity:.5} }
+
+  /* ── Nav ── */
+  .nav-wrap { position: relative; z-index: 10; background: var(--navy-dark); padding: 0 36px; display: flex; gap: 2px; }
+  .nav-tab { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500; padding: 12px 22px; border: none; border-bottom: 3px solid transparent; cursor: pointer; color: rgba(255,255,255,0.5); background: transparent; transition: all 0.2s; }
+  .nav-tab:hover { color: rgba(255,255,255,0.85); }
+  .nav-tab.active { color: #fff; border-bottom-color: var(--green); }
+
+  /* ── Main ── */
+  .main { position: relative; z-index: 10; padding: 28px 36px 56px; max-width: 1600px; margin: 0 auto; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Buttons ── */
+  .btn { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.18s; display: inline-flex; align-items: center; gap: 7px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--green-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-navy    { background: var(--navy); color: #fff; }
+  .btn-navy:hover:not(:disabled) { background: var(--navy-light); }
+  .btn-ghost   { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.15); }
+  .btn-ghost-dark { background: #fff; color: var(--text-mid); border: 1.5px solid var(--border-dark); }
+  .btn-ghost-dark:hover:not(:disabled) { border-color: var(--navy); color: var(--navy); }
+  .btn-sm { font-size: 11px; padding: 5px 12px; border-radius: 6px; }
+
+  /* ── Setup Banner ── */
+  .setup-banner { background: linear-gradient(135deg, var(--navy), var(--navy-light)); border-radius: var(--radius); padding: 28px 32px; color: #fff; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 20px; box-shadow: var(--shadow-md); }
+  .setup-icon { font-size: 36px; flex-shrink: 0; margin-top: 2px; }
+  .setup-body h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .setup-body p  { font-size: 13px; opacity: 0.85; line-height: 1.6; margin-bottom: 14px; }
+  .setup-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .setup-row input { background: rgba(255,255,255,0.14); border: 1.5px solid rgba(255,255,255,0.28); color: #fff; font-size: 13px; padding: 9px 14px; border-radius: 8px; flex: 1; min-width: 260px; font-family: 'DM Mono', monospace; width: auto; }
+  .setup-row input::placeholder { color: rgba(255,255,255,0.4); }
+  .setup-row input:focus { outline: none; border-color: var(--green); }
+  .setup-steps { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.15); }
+  .setup-steps p { font-size: 11px; opacity: 0.65; margin-bottom: 5px; font-weight: 700; letter-spacing: 0.5px; }
+  .setup-steps ol { font-size: 12px; opacity: 0.7; padding-left: 18px; line-height: 2; }
+
+  /* ── Security notice ── */
+  .security-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(148,193,46,0.15); color: var(--green-light); border: 1px solid rgba(148,193,46,0.3); margin-bottom: 14px; }
+
+  /* ── Stats ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px 20px 18px; position: relative; overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s; }
+  .stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: var(--sc, var(--green)); }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .stat-icon  { font-size: 22px; margin-bottom: 10px; display: block; }
+  .stat-value { font-size: 40px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase; margin-top: 6px; }
+
+  /* ── Breakdown ── */
+  .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .breakdown-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .section-heading { font-size: 13px; font-weight: 700; color: var(--navy); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-heading::after { content: ''; flex: 1; height: 1.5px; background: var(--border); }
+  .br-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+  .br-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .br-name  { font-size: 12px; color: var(--text-mid); min-width: 110px; font-weight: 500; }
+  .br-wrap  { flex: 1; height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+  .br-bar   { height: 100%; border-radius: 4px; transition: width 0.7s cubic-bezier(.4,0,.2,1); }
+  .br-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--navy); font-weight: 500; min-width: 18px; text-align: right; }
+
+  /* ── Recent ── */
+  .recent-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .recent-item { display: flex; align-items: center; gap: 14px; padding: 13px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-item:hover { background: var(--surface2); }
+  .r-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+
+  /* ── Kanban ── */
+  .kanban { display: grid; grid-template-columns: repeat(6, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 12px; }
+  .kanban-col { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); min-height: 520px; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+  .kanban-header { padding: 13px 15px; border-bottom: 1.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; border-top: 4px solid var(--sc); border-radius: var(--radius) var(--radius) 0 0; }
+  .kanban-title { font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--sc); }
+  .kanban-count { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; color: var(--text-mid); }
+  .kanban-body { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 9px; }
+  .kanban-body.drag-over { background: rgba(148,193,46,0.07); outline: 2px dashed var(--green); border-radius: 0 0 var(--radius) var(--radius); }
+
+  /* ── Project Card ── */
+  .project-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 13px; cursor: grab; transition: all 0.18s; position: relative; border-left: 4px solid var(--tc); box-shadow: 0 1px 4px rgba(29,67,112,0.07); }
+  .project-card:hover { border-color: var(--green); border-left-color: var(--tc); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .project-card.dragging { opacity: 0.3; cursor: grabbing; }
+  .c-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; color: var(--tc); background: color-mix(in srgb, var(--tc) 12%, transparent); }
+  .c-name  { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 5px; line-height: 1.4; }
+  .c-desc  { font-size: 11px; color: var(--text-muted); margin-bottom: 9px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .c-meta  { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+  .c-date  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
+  .c-link  { font-size: 10px; font-weight: 600; color: var(--navy); text-decoration: none; display: flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border-dark); transition: all 0.15s; }
+  .c-link:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .c-actions { display: flex; gap: 5px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+  .c-btn { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 5px; border: 1px solid var(--border-dark); background: var(--bg); color: var(--text-mid); cursor: pointer; transition: all 0.15s; font-family: 'Outfit', sans-serif; }
+  .c-btn:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .c-btn.danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+  .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  .search-wrap input { padding-left: 34px; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .cards-grid .project-card { cursor: default; }
+
+  /* ── Forms ── */
+  input, select, textarea { font-family: 'Outfit', sans-serif; font-size: 13px; background: var(--surface); border: 1.5px solid var(--border-dark); border-radius: 8px; padding: 10px 12px; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(29,67,112,0.1); }
+  textarea { resize: vertical; min-height: 72px; }
+  label { font-size: 11px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.8px; text-transform: uppercase; display: block; margin-bottom: 5px; }
+
+  /* ── Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(29,67,112,0.45); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; width: 100%; max-width: 530px; box-shadow: 0 20px 60px rgba(29,67,112,0.22); animation: mIn 0.2s ease; }
+  @keyframes mIn { from{opacity:0;transform:scale(.96) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-header { padding: 22px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title  { font-size: 18px; font-weight: 700; color: var(--navy); }
+  .modal-close  { width: 30px; height: 30px; border-radius: 7px; border: 1.5px solid var(--border-dark); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .modal-close:hover { color: var(--navy); border-color: var(--navy); }
+  .modal-body   { padding: 18px 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .form-group   { display: flex; flex-direction: column; gap: 5px; }
+  .form-row     { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-footer { padding: 0 24px 22px; display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ── Share box ── */
+  .share-box { background: var(--bg); border: 1.5px solid var(--border-dark); border-radius: 8px; padding: 16px; }
+  .share-url  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--navy); word-break: break-all; line-height: 1.7; margin-bottom: 12px; }
+  .share-note { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin-top: 12px; padding: 10px 12px; background: rgba(148,193,46,0.1); border-radius: 6px; border-left: 3px solid var(--green); }
+
+  /* ── Empty ── */
+  .empty-col { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 14px; color: var(--text-muted); font-size: 11px; font-weight: 500; gap: 6px; opacity: 0.6; }
+  .s-pill { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: #fff; border-left: 4px solid var(--green); padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 200; opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; box-shadow: var(--shadow-md); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--navy); }
+
+  @media (max-width: 768px) {
+    header, .nav-wrap, .main { padding-left: 16px; padding-right: 16px; }
+    .kanban { grid-template-columns: repeat(6, 200px); }
+    .form-row { grid-template-columns: 1fr; }
+    .breakdown { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="lbar"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">H</div>
+    <div class="logo-text">
+      <h1>Project Tracker</h1>
+      <p>DIGITAL &amp; TECHNOLOGY</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="view-badge">👁 View Only · Live</div>
+    <div class="sync-pill edit-only" id="sync-pill">
+      <div class="sync-dot none" id="sync-dot"></div>
+      <span id="sync-text">Not connected</span>
+    </div>
+    <button class="btn btn-ghost edit-only" onclick="openShareModal()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+    <button class="btn btn-primary edit-only" onclick="openModal()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Project
+    </button>
+  </div>
+</header>
+
+<div class="nav-wrap">
+  <button class="nav-tab active" onclick="switchView('stats',this)">📊 Overview</button>
+  <button class="nav-tab" onclick="switchView('kanban',this)">🗂 Kanban</button>
+  <button class="nav-tab" onclick="switchView('cards',this)">🃏 All Projects</button>
+</div>
+
+<div class="main">
+
+  <!-- STATS -->
+  <div id="view-stats" class="view active">
+    <div class="setup-banner edit-only" id="setup-banner" style="display:none">
+      <div class="setup-icon">🔐</div>
+      <div class="setup-body" style="flex:1">
+        <h2>Connect &amp; Secure Your Dashboard</h2>
+        <div class="security-chip">🔒 Token-protected writes · Public reads</div>
+        <p>Paste your Apps Script Web App URL and your secret edit token. These are saved only on this device — never included in share links. Viewers can read data freely but cannot make changes without the token.</p>
+        <div class="setup-row">
+          <input type="url" id="api-input" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+        </div>
+        <div class="setup-row">
+          <input type="password" id="token-input" placeholder="Your secret edit token (from the backend script)" autocomplete="new-password">
+          <button class="btn btn-primary" onclick="connectApi()">Connect</button>
+        </div>
+        <div class="setup-steps">
+          <p>SETUP STEPS</p>
+          <ol>
+            <li>In <strong>HolcimTracker_Backend_v3.gs</strong>, set <code style="background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:3px">EDIT_TOKEN</code> to a secret string</li>
+            <li>Deploy as Web App (Execute as: Me, Access: Anyone)</li>
+            <li>Paste the Web App URL and your token above</li>
+            <li>Keep the repo private on GitHub to hide source code</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="breakdown">
+      <div class="breakdown-card">
+        <div class="section-heading">By Type</div>
+        <div id="bd-type"></div>
+      </div>
+      <div class="breakdown-card">
+        <div class="section-heading">By Stage</div>
+        <div id="bd-stage"></div>
+      </div>
+    </div>
+    <div class="section-heading" style="margin-bottom:12px">Recent Updates</div>
+    <div class="recent-card" id="recent-list"></div>
+  </div>
+
+  <!-- KANBAN -->
+  <div id="view-kanban" class="view">
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- CARDS -->
+  <div id="view-cards" class="view">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Search projects…" oninput="renderCards()">
+      </div>
+      <select style="width:auto;min-width:150px" id="filter-type" onchange="renderCards()">
+        <option value="">All Types</option>
+        <option value="script">Google Apps Script</option>
+        <option value="qlik">QlikSense</option>
+        <option value="appsheet">AppSheet</option>
+        <option value="excel">Excel / Sheets</option>
+      </select>
+      <select style="width:auto;min-width:140px" id="filter-stage" onchange="renderCards()">
+        <option value="">All Stages</option>
+        <option value="backlog">Backlog</option>
+        <option value="indev">In Development</option>
+        <option value="testing">Testing</option>
+        <option value="uat">UAT</option>
+        <option value="live">Live</option>
+        <option value="onhold">On Hold</option>
+      </select>
+    </div>
+    <div class="cards-grid" id="cards-grid"></div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New Project</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" id="f-name" placeholder="e.g. Holcim Entity Transform Script">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="f-type">
+            <option value="script">Google Apps Script</option>
+            <option value="qlik">QlikSense Dashboard</option>
+            <option value="appsheet">AppSheet App</option>
+            <option value="excel">Excel / Sheets</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Stage</label>
+          <select id="f-stage">
+            <option value="backlog">Backlog</option>
+            <option value="indev">In Development</option>
+            <option value="testing">Testing</option>
+            <option value="uat">UAT</option>
+            <option value="live">Live</option>
+            <option value="onhold">On Hold</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description / Notes</label>
+        <textarea id="f-desc" placeholder="What does this project do?"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Link URL</label>
+        <input type="url" id="f-url" placeholder="https://docs.google.com/spreadsheets/…">
+      </div>
+      <div class="form-group">
+        <label>Link Label</label>
+        <input type="text" id="f-urllabel" placeholder="e.g. Open Sheet, Open Dashboard">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost-dark" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="share-overlay" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Share Dashboard</div>
+      <button class="modal-close" onclick="closeShareModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-mid);line-height:1.6">
+        Share a <strong>read-only, always-live</strong> view. The edit token is <strong>never included</strong> in share links — viewers can only read data, not modify it.
+      </p>
+      <div class="share-box">
+        <div class="share-url" id="share-url-text">—</div>
+        <button class="btn btn-navy btn-sm" onclick="copyShare()" style="width:100%">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Link
+        </button>
+        <p class="share-note">🔒 This link only includes the API URL (read access). Your edit token stays on your device only. Viewers see all projects but cannot add, edit, move, or delete anything.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost-dark" onclick="closeShareModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// STORAGE KEYS
+// ═══════════════════════════════════════════════════
+const KEY_API   = 'holcim_api_v4';
+const KEY_TOKEN = 'holcim_token_v4';   // never sent in share links
+const KEY_CACHE = 'holcim_cache_v4';
+
+const TYPES = {
+  script:   { label:'Apps Script',  color:'#1D4370', icon:'⚙️' },
+  qlik:     { label:'QlikSense',    color:'#94C12E', icon:'📊' },
+  appsheet: { label:'AppSheet',     color:'#2a7abf', icon:'📱' },
+  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' }
+};
+
+const STAGES = {
+  backlog:  { label:'Backlog',        color:'#8aa070' },
+  indev:    { label:'In Development', color:'#1D4370' },
+  testing:  { label:'Testing',        color:'#d4890a' },
+  uat:      { label:'UAT',            color:'#2a7abf' },
+  live:     { label:'Live',           color:'#94C12E' },
+  onhold:   { label:'On Hold',        color:'#e03030' }
+};
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let IS_VIEW  = false;
+let API_URL  = '';
+let TOKEN    = '';     // only set on owner's device
+let projects = [];
+let cbN      = 0;
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function init() {
+  const params  = new URLSearchParams(window.location.search);
+  const viewApi = params.get('api');
+
+  if (viewApi) {
+    // VIEW MODE — api in URL, no token
+    IS_VIEW = true;
+    API_URL = decodeURIComponent(viewApi);
+    TOKEN   = '';  // no token for viewers
+    document.body.classList.add('view-mode');
+  } else {
+    // EDIT MODE — load saved credentials from localStorage
+    API_URL = localStorage.getItem(KEY_API)   || '';
+    TOKEN   = localStorage.getItem(KEY_TOKEN) || '';
+  }
+
+  try { projects = JSON.parse(localStorage.getItem(KEY_CACHE) || '[]'); } catch(_){}
+
+  if (!API_URL && !IS_VIEW) {
+    document.getElementById('setup-banner').style.display = 'flex';
+    setSyncStatus('none', 'Not connected');
+  }
+
+  renderAll();
+  if (API_URL) fetchProjects();
+}
+
+// ═══════════════════════════════════════════════════
+// CONNECT
+// ═══════════════════════════════════════════════════
+function connectApi() {
+  const url   = document.getElementById('api-input').value.trim();
+  const token = document.getElementById('token-input').value.trim();
+
+  if (!url.startsWith('https://script.google.com')) {
+    alert('Please enter a valid Apps Script Web App URL.');
+    return;
+  }
+  if (!token) {
+    alert('Please enter your secret edit token.');
+    return;
+  }
+
+  API_URL = url;
+  TOKEN   = token;
+  localStorage.setItem(KEY_API,   url);
+  localStorage.setItem(KEY_TOKEN, token);
+  document.getElementById('setup-banner').style.display = 'none';
+  fetchProjects();
+  toast('✅ Connecting…');
+}
+
+// ═══════════════════════════════════════════════════
+// JSONP (cross-origin safe)
+// ═══════════════════════════════════════════════════
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cb   = '__hcb' + (++cbN);
+    const tmr  = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, 15000);
+    const scr  = document.createElement('script');
+
+    function cleanup() { clearTimeout(tmr); delete window[cb]; scr.remove(); }
+
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    scr.onerror = () => { cleanup(); reject(new Error('Network error')); };
+
+    const qs = Object.entries({ ...params, callback: cb })
+      .map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
+
+    scr.src = API_URL + '?' + qs;
+    document.head.appendChild(scr);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// FETCH
+// ═══════════════════════════════════════════════════
+function setLoading(on) {
+  const b = document.getElementById('lbar');
+  if (on) b.classList.add('running');
+  else { b.style.width = '100%'; setTimeout(() => { b.classList.remove('running'); b.style.width = '0%'; }, 350); }
+}
+
+function setSyncStatus(state, text) {
+  const dot  = document.getElementById('sync-dot');
+  const span = document.getElementById('sync-text');
+  if (!dot) return;
+  dot.className = 'sync-dot ' + state;
+  if (span) span.textContent = text;
+}
+
+async function fetchProjects() {
+  if (!API_URL) return;
+  setLoading(true);
+  setSyncStatus('syncing', 'Syncing…');
+  try {
+    const data = await jsonp({ action: 'getAll' });
+    if (data.error) throw new Error(data.error);
+    projects = data.projects || [];
+    localStorage.setItem(KEY_CACHE, JSON.stringify(projects));
+    setSyncStatus('ok', 'Synced ' + fmtTime(new Date()));
+    renderAll();
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error', 'Sync failed — cached');
+    toast('⚠️ Could not reach Google Sheets. Showing cached data.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// All write operations include the token
+async function apiWrite(params) {
+  if (!API_URL) { toast('⚠️ Not connected.'); return null; }
+  if (!TOKEN)   { toast('🔒 No edit token — reconnect via the setup banner.'); return null; }
+
+  setSyncStatus('syncing', 'Saving…');
+  try {
+    // Token included in every write request
+    const data = await jsonp({ ...params, token: TOKEN });
+
+    if (data.code === 401 || data.error === 'Unauthorized') {
+      setSyncStatus('error', 'Auth failed');
+      toast('🔒 Incorrect token — please reconnect with the correct token.');
+      return null;
+    }
+    if (data.error) throw new Error(data.error);
+
+    setSyncStatus('ok', 'Saved ' + fmtTime(new Date()));
+    return data;
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error', 'Save failed');
+    toast('❌ Save failed — please try again.');
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// VIEWS
+// ═══════════════════════════════════════════════════
+function switchView(view, tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  tab.classList.add('active');
+  renderAll();
+  if (API_URL) fetchProjects();
+}
+
+function renderAll() {
+  const id = document.querySelector('.view.active')?.id;
+  if (id === 'view-stats')  renderStats();
+  if (id === 'view-kanban') renderKanban();
+  if (id === 'view-cards')  renderCards();
+}
+
+// ═══════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════
+function renderStats() {
+  const p = projects, total = p.length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card" style="--sc:var(--navy)"><span class="stat-icon">📁</span><div class="stat-value">${total}</div><div class="stat-label">Total Projects</div></div>
+    <div class="stat-card" style="--sc:var(--green)"><span class="stat-icon">✅</span><div class="stat-value">${p.filter(x=>x.stage==='live').length}</div><div class="stat-label">Live</div></div>
+    <div class="stat-card" style="--sc:#1D4370"><span class="stat-icon">🔧</span><div class="stat-value">${p.filter(x=>x.stage==='indev').length}</div><div class="stat-label">In Development</div></div>
+    <div class="stat-card" style="--sc:#d4890a"><span class="stat-icon">🧪</span><div class="stat-value">${p.filter(x=>['testing','uat'].includes(x.stage)).length}</div><div class="stat-label">Testing / UAT</div></div>
+  `;
+
+  document.getElementById('bd-type').innerHTML = Object.entries(TYPES).map(([k,t]) => {
+    const c = p.filter(x=>x.type===k).length, pct = total ? Math.round(c/total*100) : 0;
+    return `<div class="br-row"><div class="br-dot" style="background:${t.color}"></div><div class="br-name">${t.label}</div><div class="br-wrap"><div class="br-bar" style="width:${pct}%;background:${t.color}"></div></div><div class="br-count">${c}</div></div>`;
+  }).join('');
+
+  document.getElementById('bd-stage').innerHTML = Object.entries(STAGES).map(([k,s]) => {
+    const c = p.filter(x=>x.stage===k).length, pct = total ? Math.round(c/total*100) : 0;
+    return `<div class="br-row"><div class="br-dot" style="background:${s.color}"></div><div class="br-name">${s.label}</div><div class="br-wrap"><div class="br-bar" style="width:${pct}%;background:${s.color}"></div></div><div class="br-count">${c}</div></div>`;
+  }).join('');
+
+  const recent = [...p].sort((a,b)=>new Date(b.updated)-new Date(a.updated)).slice(0,8);
+  document.getElementById('recent-list').innerHTML = recent.length
+    ? recent.map(r => {
+        const t = TYPES[r.type]||{label:r.type,color:'#888',icon:'📁'};
+        const s = STAGES[r.stage]||{label:r.stage,color:'#888'};
+        return `<div class="recent-item">
+          <div class="r-icon" style="background:${t.color}22">${t.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.name)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${t.label}</div>
+          </div>
+          <span class="s-pill" style="background:${s.color}18;color:${s.color}">${s.label}</span>
+          <div class="c-date">${fmtDate(r.updated)}</div>
+        </div>`;
+      }).join('')
+    : `<div style="padding:24px;color:var(--text-muted);font-size:13px">${API_URL ? 'No projects yet — click + New Project.' : 'Connect above to get started.'}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// KANBAN
+// ═══════════════════════════════════════════════════
+let dragId = null;
+
+function renderKanban() {
+  document.getElementById('kanban-board').innerHTML = Object.entries(STAGES).map(([sk,s]) => {
+    const cols    = projects.filter(p=>p.stage===sk);
+    const dropEvt = IS_VIEW ? '' : `ondragover="onDragOver(event)" ondrop="onDrop(event,'${sk}')" ondragleave="onDragLeave(event)"`;
+    return `<div class="kanban-col" style="--sc:${s.color}" ${dropEvt}>
+      <div class="kanban-header">
+        <div class="kanban-title">${s.label}</div>
+        <div class="kanban-count">${cols.length}</div>
+      </div>
+      <div class="kanban-body" id="col-${sk}">
+        ${cols.length ? cols.map(p=>buildCard(p,!IS_VIEW)).join('') : `<div class="empty-col"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="12" x2="15" y2="12"/></svg>${IS_VIEW?'Empty':'Drop here'}</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCard(p, draggable) {
+  const t = TYPES[p.type]||{label:p.type,color:'#888',icon:'📁'};
+  const link = p.url ? `<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener"><svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${esc(p.urllabel||'Open Link')}</a>` : '';
+  const actions = !IS_VIEW ? `<div class="c-actions"><button class="c-btn" onclick="openModal('${p.id}')">✏️ Edit</button><button class="c-btn danger" onclick="deleteProject('${p.id}')">🗑 Delete</button></div>` : '';
+  return `<div class="project-card" style="--tc:${t.color}" id="card-${p.id}" draggable="${draggable}" ${draggable?`ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)"`:''}><div class="c-badge" style="--tc:${t.color}">${t.icon} ${t.label}</div><div class="c-name">${esc(p.name)}</div>${p.desc?`<div class="c-desc">${esc(p.desc)}</div>`:''}<div class="c-meta"><div class="c-date">${fmtDate(p.updated)}</div>${link}</div>${actions}</div>`;
+}
+
+function onDragStart(e,id) { dragId=id; setTimeout(()=>document.getElementById('card-'+id)?.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; }
+function onDragEnd()        { document.querySelectorAll('.project-card,.kanban-body').forEach(el=>el.classList.remove('dragging','drag-over')); }
+function onDragOver(e)      { e.preventDefault(); e.currentTarget.querySelector('.kanban-body')?.classList.add('drag-over'); }
+function onDragLeave(e)     { e.currentTarget.querySelector('.kanban-body')?.classList.remove('drag-over'); }
+
+async function onDrop(e, stage) {
+  e.preventDefault();
+  e.currentTarget.querySelector('.kanban-body')?.classList.remove('drag-over');
+  if (!dragId) return;
+  const p = projects.find(x=>x.id===dragId);
+  if (p && p.stage !== stage) {
+    const prev = p.stage;
+    p.stage = stage;
+    p.updated = new Date().toISOString();
+    renderKanban();
+    const res = await apiWrite({ action:'update', data: JSON.stringify(p) });
+    if (!res) { p.stage = prev; renderKanban(); }
+    else { localStorage.setItem(KEY_CACHE, JSON.stringify(projects)); toast('Moved to ' + STAGES[stage].label); }
+  }
+  dragId = null;
+}
+
+// ═══════════════════════════════════════════════════
+// CARDS
+// ═══════════════════════════════════════════════════
+function renderCards() {
+  const q  = document.getElementById('search-input')?.value.toLowerCase()||'';
+  const ft = document.getElementById('filter-type')?.value||'';
+  const fs = document.getElementById('filter-stage')?.value||'';
+  let p = [...projects];
+  if (q)  p = p.filter(x=>x.name.toLowerCase().includes(q)||(x.desc||'').toLowerCase().includes(q));
+  if (ft) p = p.filter(x=>x.type===ft);
+  if (fs) p = p.filter(x=>x.stage===fs);
+  p.sort((a,b)=>new Date(b.updated)-new Date(a.updated));
+  document.getElementById('cards-grid').innerHTML = p.length
+    ? p.map(x=>buildCard(x,false)).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;padding:20px 0">No projects match your filters.</div>';
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════
+function openModal(editId) {
+  if (IS_VIEW) return;
+  document.getElementById('modal-overlay').classList.add('open');
+  if (editId) {
+    const p = projects.find(x=>x.id===editId); if (!p) return;
+    document.getElementById('modal-title').textContent = 'Edit Project';
+    document.getElementById('edit-id').value    = p.id;
+    document.getElementById('f-name').value     = p.name||'';
+    document.getElementById('f-type').value     = p.type||'script';
+    document.getElementById('f-stage').value    = p.stage||'backlog';
+    document.getElementById('f-desc').value     = p.desc||'';
+    document.getElementById('f-url').value      = p.url||'';
+    document.getElementById('f-urllabel').value = p.urllabel||'';
+  } else {
+    document.getElementById('modal-title').textContent = 'New Project';
+    ['edit-id','f-name','f-desc','f-url','f-urllabel'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-type').value='script';
+    document.getElementById('f-stage').value='backlog';
+  }
+  document.getElementById('f-name').focus();
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+async function saveProject() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Project name is required.'); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const editId = document.getElementById('edit-id').value;
+  const proj   = { id: editId||undefined, name, type: gv('f-type'), stage: gv('f-stage'), desc: gv('f-desc'), url: gv('f-url'), urllabel: gv('f-urllabel'), updated: new Date().toISOString() };
+  const action = editId ? 'update' : 'add';
+
+  const res = await apiWrite({ action, data: JSON.stringify(proj) });
+  btn.disabled = false; btn.textContent = 'Save Project';
+  if (!res) return;
+
+  if (action === 'add') {
+    proj.id = res.id; proj.created = res.created || new Date().toISOString();
+    projects.push(proj);
+  } else {
+    const idx = projects.findIndex(x=>x.id===editId);
+    if (idx !== -1) projects[idx] = proj;
+  }
+
+  localStorage.setItem(KEY_CACHE, JSON.stringify(projects));
+  closeModal(); renderAll();
+  toast(editId ? '✅ Project updated!' : '✅ Project added!');
+}
+
+function gv(id) { return document.getElementById(id).value.trim(); }
+
+async function deleteProject(id) {
+  if (!confirm('Delete this project? Cannot be undone.')) return;
+  const backup = [...projects];
+  projects = projects.filter(p=>p.id!==id);
+  renderAll();
+  const res = await apiWrite({ action:'delete', id });
+  if (!res) { projects = backup; renderAll(); return; }
+  localStorage.setItem(KEY_CACHE, JSON.stringify(projects));
+  toast('🗑 Project deleted.');
+}
+
+// ═══════════════════════════════════════════════════
+// SHARE — token intentionally excluded
+// ═══════════════════════════════════════════════════
+function openShareModal() {
+  if (!API_URL) { toast('⚠️ Connect to Google Sheets first.'); return; }
+  const base = window.location.href.split('?')[0];
+  // Only API_URL in share link — TOKEN never shared
+  document.getElementById('share-url-text').textContent = `${base}?api=${encodeURIComponent(API_URL)}`;
+  document.getElementById('share-overlay').classList.add('open');
+}
+
+function closeShareModal() { document.getElementById('share-overlay').classList.remove('open'); }
+
+function copyShare() {
+  const url = document.getElementById('share-url-text').textContent;
+  navigator.clipboard.writeText(url).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }).finally(() => {
+    closeShareModal();
+    toast('🔗 Share link copied — token not included, viewers are read-only.');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(ts) { if (!ts) return ''; const d = new Date(ts); return isNaN(d) ? ts : d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTime(d)  { return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function toast(msg)  { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3200); }
+
+// ═══════════════════════════════════════════════════
+// GO
+// ═══════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
