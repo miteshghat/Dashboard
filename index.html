@@ -147,7 +147,7 @@
   .r-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 
   /* ── Kanban ── */
-  .kanban { display: grid; grid-template-columns: repeat(6, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 12px; }
+  .kanban { display: grid; grid-template-columns: repeat(6, 210px); gap: 14px; overflow-x: auto; padding-bottom: 12px; min-width: 0; }
   .kanban-col { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); min-height: 520px; display: flex; flex-direction: column; box-shadow: var(--shadow); }
   .kanban-header { padding: 13px 15px; border-bottom: 1.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; border-top: 4px solid var(--sc); border-radius: var(--radius) var(--radius) 0 0; }
   .kanban-title { font-size: 12px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--sc); }
@@ -305,7 +305,9 @@
 
   <!-- KANBAN -->
   <div id="view-kanban" class="view">
-    <div class="kanban" id="kanban-board"></div>
+    <div style="overflow-x:auto; width:100%;">
+      <div class="kanban" id="kanban-board"></div>
+    </div>
   </div>
 
   <!-- CARDS -->
@@ -431,7 +433,9 @@ const TYPES = {
   script:   { label:'Apps Script',  color:'#1D4370', icon:'⚙️' },
   qlik:     { label:'QlikSense',    color:'#94C12E', icon:'📊' },
   appsheet: { label:'AppSheet',     color:'#2a7abf', icon:'📱' },
-  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' }
+  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' },
+  ai:       { label:'AI',           color:'#7c3aed', icon:'🤖' },
+  other:    { label:'Other',        color:'#6b7280', icon:'📌' }
 };
 
 const STAGES = {
