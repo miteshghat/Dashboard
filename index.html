@@ -620,9 +620,11 @@ function renderStats() {
 
   document.getElementById('stats-grid').innerHTML = `
     <div class="stat-card" style="--sc:var(--navy)"><span class="stat-icon">📁</span><div class="stat-value">${total}</div><div class="stat-label">Total Projects</div></div>
-    <div class="stat-card" style="--sc:var(--green)"><span class="stat-icon">✅</span><div class="stat-value">${p.filter(x=>x.stage==='live').length}</div><div class="stat-label">Live</div></div>
+    <div class="stat-card" style="--sc:#8aa070"><span class="stat-icon">📋</span><div class="stat-value">${p.filter(x=>x.stage==='backlog').length}</div><div class="stat-label">Backlog</div></div>
     <div class="stat-card" style="--sc:#1D4370"><span class="stat-icon">🔧</span><div class="stat-value">${p.filter(x=>x.stage==='indev').length}</div><div class="stat-label">In Development</div></div>
     <div class="stat-card" style="--sc:#d4890a"><span class="stat-icon">🧪</span><div class="stat-value">${p.filter(x=>['testing','uat'].includes(x.stage)).length}</div><div class="stat-label">Testing / UAT</div></div>
+    <div class="stat-card" style="--sc:var(--green)"><span class="stat-icon">✅</span><div class="stat-value">${p.filter(x=>x.stage==='live').length}</div><div class="stat-label">Live</div></div>
+    <div class="stat-card" style="--sc:#e03030"><span class="stat-icon">⏸️</span><div class="stat-value">${p.filter(x=>x.stage==='onhold').length}</div><div class="stat-label">On Hold</div></div>
   `;
 
   document.getElementById('bd-type').innerHTML = Object.entries(TYPES).map(([k,t]) => {
