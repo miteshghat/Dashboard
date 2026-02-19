@@ -316,12 +316,14 @@
         <input type="text" id="search-input" placeholder="Search projects…" oninput="renderCards()">
       </div>
       <select style="width:auto;min-width:150px" id="filter-type" onchange="renderCards()">
-        <option value="">All Types</option>
-        <option value="script">Google Apps Script</option>
-        <option value="qlik">QlikSense</option>
-        <option value="appsheet">AppSheet</option>
-        <option value="excel">Excel / Sheets</option>
-      </select>
+  <option value="">All Types</option>
+  <option value="script">Google Apps Script</option>
+  <option value="qlik">QlikSense</option>
+  <option value="appsheet">AppSheet</option>
+  <option value="excel">Excel / Sheets</option>
+  <option value="ai">AI</option>
+  <option value="other">Other</option>
+</select>
       <select style="width:auto;min-width:140px" id="filter-stage" onchange="renderCards()">
         <option value="">All Stages</option>
         <option value="backlog">Backlog</option>
@@ -431,7 +433,9 @@ const TYPES = {
   script:   { label:'Apps Script',  color:'#1D4370', icon:'⚙️' },
   qlik:     { label:'QlikSense',    color:'#94C12E', icon:'📊' },
   appsheet: { label:'AppSheet',     color:'#2a7abf', icon:'📱' },
-  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' }
+  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' },
+  ai:       { label:'AI',           color:'#7c3aed', icon:'🤖' },
+  other:    { label:'Other',        color:'#6b7280', icon:'📌' }
 };
 
 const STAGES = {
