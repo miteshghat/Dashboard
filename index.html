@@ -686,7 +686,7 @@ function buildCard(p, draggable) {
   const t = TYPES[p.type]||{label:p.type,color:'#888',icon:'📁'};
   const link = p.url ? `<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener"><svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${esc(p.urllabel||'Open Link')}</a>` : '';
   const actions = !IS_VIEW ? `<div class="c-actions"><button class="c-btn" onclick="openModal('${p.id}')">✏️ Edit</button><button class="c-btn danger" onclick="deleteProject('${p.id}')">🗑 Delete</button></div>` : '';
-  return `<div class="project-card" style="--tc:${t.color}" id="card-${p.id}" draggable="${draggable}" ${draggable?`ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)"`:''}><div class="c-badge" style="--tc:${t.color}">${t.icon} ${t.label}</div><div class="c-name">${esc(p.name)}</div>${p.desc?`<div class="c-desc">${esc(p.desc)}</div>`:''}<div class="c-meta">${link}</div>`;
+  return `<div class="project-card" style="--tc:${t.color}" id="card-${p.id}" draggable="${draggable}" ${draggable?`ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)"`:''}><div class="c-badge" style="--tc:${t.color}">${t.icon} ${t.label}</div><div class="c-name">${esc(p.name)}</div>${p.desc?`<div class="c-desc">${esc(p.desc)}</div>`:''}<div class="c-meta" style="justify-content:flex-end">${link}</div>`;
 }
 
 function onDragStart(e,id) { dragId=id; setTimeout(()=>document.getElementById('card-'+id)?.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; }
