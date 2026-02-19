@@ -256,7 +256,7 @@
 
 <div class="nav-wrap">
   <button class="nav-tab active" onclick="switchView('stats',this)">📊 Overview</button>
-  <button class="nav-tab" onclick="switchView('kanban',this)">🔄 Project Status</button>
+  <button class="nav-tab" onclick="switchView('kanban',this)">🗂 Kanban</button>
   <button class="nav-tab" onclick="switchView('cards',this)">🃏 All Projects</button>
 </div>
 
@@ -316,14 +316,12 @@
         <input type="text" id="search-input" placeholder="Search projects…" oninput="renderCards()">
       </div>
       <select style="width:auto;min-width:150px" id="filter-type" onchange="renderCards()">
-  <option value="">All Types</option>
-  <option value="script">Google Apps Script</option>
-  <option value="qlik">QlikSense</option>
-  <option value="appsheet">AppSheet</option>
-  <option value="excel">Excel / Sheets</option>
-  <option value="ai">AI</option>
-  <option value="other">Other</option>
-</select>
+        <option value="">All Types</option>
+        <option value="script">Google Apps Script</option>
+        <option value="qlik">QlikSense</option>
+        <option value="appsheet">AppSheet</option>
+        <option value="excel">Excel / Sheets</option>
+      </select>
       <select style="width:auto;min-width:140px" id="filter-stage" onchange="renderCards()">
         <option value="">All Stages</option>
         <option value="backlog">Backlog</option>
@@ -355,13 +353,11 @@
         <div class="form-group">
           <label>Type</label>
           <select id="f-type">
-  <option value="script">Google Apps Script</option>
-  <option value="qlik">QlikSense Dashboard</option>
-  <option value="appsheet">AppSheet App</option>
-  <option value="excel">Excel / Sheets</option>
-  <option value="ai">AI</option>
-  <option value="other">Other</option>
-</select>
+            <option value="script">Google Apps Script</option>
+            <option value="qlik">QlikSense Dashboard</option>
+            <option value="appsheet">AppSheet App</option>
+            <option value="excel">Excel / Sheets</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Stage</label>
@@ -435,9 +431,7 @@ const TYPES = {
   script:   { label:'Apps Script',  color:'#1D4370', icon:'⚙️' },
   qlik:     { label:'QlikSense',    color:'#94C12E', icon:'📊' },
   appsheet: { label:'AppSheet',     color:'#2a7abf', icon:'📱' },
-  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' },
-  ai:       { label:'AI',           color:'#7c3aed', icon:'🤖' },
-  other:    { label:'Other',        color:'#6b7280', icon:'📌' }
+  excel:    { label:'Excel/Sheets', color:'#6a8f1f', icon:'📋' }
 };
 
 const STAGES = {
@@ -686,7 +680,7 @@ function buildCard(p, draggable) {
   const t = TYPES[p.type]||{label:p.type,color:'#888',icon:'📁'};
   const link = p.url ? `<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener"><svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${esc(p.urllabel||'Open Link')}</a>` : '';
   const actions = !IS_VIEW ? `<div class="c-actions"><button class="c-btn" onclick="openModal('${p.id}')">✏️ Edit</button><button class="c-btn danger" onclick="deleteProject('${p.id}')">🗑 Delete</button></div>` : '';
-  return `<div class="project-card" style="--tc:${t.color}" id="card-${p.id}" draggable="${draggable}" ${draggable?`ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)"`:''}><div class="c-badge" style="--tc:${t.color}">${t.icon} ${t.label}</div><div class="c-name">${esc(p.name)}</div>${p.desc?`<div class="c-desc">${esc(p.desc)}</div>`:''}<div class="c-meta" style="justify-content:flex-end">${link}</div>`;
+  return `<div class="project-card" style="--tc:${t.color}" id="card-${p.id}" draggable="${draggable}" ${draggable?`ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)"`:''}><div class="c-badge" style="--tc:${t.color}">${t.icon} ${t.label}</div><div class="c-name">${esc(p.name)}</div>${p.desc?`<div class="c-desc">${esc(p.desc)}</div>`:''}<div class="c-meta" style="justify-content:flex-end">${link}</div>${actions}</div>`;
 }
 
 function onDragStart(e,id) { dragId=id; setTimeout(()=>document.getElementById('card-'+id)?.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; }
